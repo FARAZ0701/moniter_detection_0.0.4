@@ -1,0 +1,105 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Detection</title>
+</head>
+<body>
+    <h1>Monitor Detection</h1>
+    <video id="camera" autoplay playsinline></video>
+    <p>Monitors Detected: <span id="monitorCount">0</span></p>
+    <button onclick="startDetection()">Start Detection</button>
+    <script>
+        const video = document.getElementById('camera');
+        const monitorCountDisplay = document.getElementById('monitorCount');
+
+        // Get access to the device's camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => console.error("Camera access denied:", err));
+
+        async function startDetection() {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+
+            setInterval(async () => {
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataUrl = canvas.toDataURL('image/jpeg');
+                const blob = await fetch(dataUrl).then(res => res.blob());
+
+                const formData = new FormData();
+                formData.append('image', blob);
+
+                const response = await fetch('http://<YOUR_PYTHON_SERVER_URL>/detect', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                monitorCountDisplay.textContent = result.monitor_count;
+            }, 1000);  // Detect every second
+        }
+    </script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Detection</title>
+</head>
+<body>
+    <h1>Monitor Detection</h1>
+    <video id="camera" autoplay playsinline></video>
+    <p>Monitors Detected: <span id="monitorCount">0</span></p>
+    <button onclick="startDetection()">Start Detection</button>
+
+    <script>
+        const video = document.getElementById('camera');
+        const monitorCountDisplay = document.getElementById('monitorCount');
+
+        // Get access to the device's camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => console.error("Camera access denied:", err));
+
+        async function startDetection() {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+
+            setInterval(async () => {
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataUrl = canvas.toDataURL('image/jpeg');
+                const blob = await fetch(dataUrl).then(res => res.blob());
+
+                const formData = new FormData();
+                formData.append('image', blob, 'frame.jpg');
+
+                const response = await fetch('http://localhost:5000/detect', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    monitorCountDisplay.textContent = result.monitor_count;
+                } else {
+                    console.error('Detection request failed.');
+                }
+            }, 1000);  // Detect every second
+        }
+    </script>
+</body>
+</html>
