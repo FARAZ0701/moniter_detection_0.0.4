@@ -13,10 +13,11 @@
         const video = document.getElementById('camera');
         const monitorCountDisplay = document.getElementById('monitorCount');
 
+        // Get access to the device's camera
         navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
             .then(stream => {
                 video.srcObject = stream;
-                startDetection();
+                startDetection();  // Start detection once the camera stream is available
             })
             .catch(err => console.error("Camera access denied:", err));
 
@@ -25,23 +26,37 @@
             const context = canvas.getContext('2d');
 
             setInterval(async () => {
+                // Set canvas dimensions based on video stream
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
+
+                // Draw the video frame to the canvas
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Convert canvas content to a Blob and prepare for sending
                 const dataUrl = canvas.toDataURL('image/jpeg');
                 const blob = await fetch(dataUrl).then(res => res.blob());
 
+                // Create FormData and send the image to the Flask server
                 const formData = new FormData();
                 formData.append('image', blob);
 
-                const response = await fetch('http://<YOUR_FLASK_SERVER_URL>/detect', {
-                    method: 'POST',
-                    body: formData
-                });
+                try {
+                    const response = await fetch('http://<YOUR_FLASK_SERVER_URL>/detect', {
+                        method: 'POST',
+                        body: formData
+                    });
 
-                const result = await response.json();
-                monitorCountDisplay.textContent = result.monitor_count;
-            }, 1000);  // Detect every second
+                    if (response.ok) {
+                        const result = await response.json();
+                        monitorCountDisplay.textContent = result.monitor_count;
+                    } else {
+                        console.error('Server error:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Request failed:', error);
+                }
+            }, 1000);  // Perform detection every second
         }
     </script>
 </body>
